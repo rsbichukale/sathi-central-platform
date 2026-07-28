@@ -1,5 +1,5 @@
 # 1. Build Stage for Frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 WORKDIR /app/web-ui
 COPY web-ui/package*.json ./
 ENV NODE_ENV=development
@@ -8,7 +8,7 @@ COPY web-ui/ ./
 RUN npm run build
 
 # 2. Production Runtime Stage
-FROM node:18-alpine
+FROM node:22-alpine
 WORKDIR /app
 
 # Setup directories
