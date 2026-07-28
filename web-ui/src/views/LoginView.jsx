@@ -4,7 +4,7 @@ export default function LoginView({ setCurrentView, showToast }) {
   const [loginType, setLoginType] = useState('customer'); // 'customer' or 'admin'
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
-  const [adminPass, setAdminPass] = useState('admin123');
+  const [adminPass, setAdminPass] = useState('');
   const [authErr, setAuthErr] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -125,7 +125,7 @@ export default function LoginView({ setCurrentView, showToast }) {
           <form onSubmit={handleAdminLogin}>
             <div style={{ marginBottom: '24px' }}>
               <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Admin Master Password</label>
-              <input type="password" className="modern-input" placeholder="Admin Password (default: admin123)" value={adminPass} onChange={e => setAdminPass(e.target.value)} required style={{ textAlign: 'center' }} />
+              <input type="password" className="modern-input" placeholder="Enter Admin Master Password" value={adminPass} onChange={e => setAdminPass(e.target.value)} required style={{ textAlign: 'center' }} />
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', justifyContent: 'center', height: '46px', fontSize: '15px', marginBottom: '20px' }}>
