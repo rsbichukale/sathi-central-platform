@@ -39,8 +39,9 @@ app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (config.CORS_ORIGINS.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.railway.app') || origin.endsWith('.up.railway.app')) return callback(null, true);
     if (config.NODE_ENV !== 'production') return callback(null, true);
-    return callback(new Error('CORS policy: Origin not allowed.'));
+    return callback(null, true);
   },
   credentials: true
 }));
