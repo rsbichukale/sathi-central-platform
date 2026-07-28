@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Portal — Ruractive Technology</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: #111726;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #3b82f6;
+      --font: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: rgba(17, 23, 38, 0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 18px 48px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: #fff; text-decoration: none; }
+    .brand-icon { width: 42px; height: 42px; background: linear-gradient(135deg, #10b981, #3b82f6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+    .container { max-width: 1100px; width: 100%; margin: 0 auto; padding: 36px 24px; flex: 1; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 28px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+    .card-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+    .btn { background: var(--primary); color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-sec { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th { background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 700; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    td { padding: 16px; border-bottom: 1px solid var(--border); color: #e2e8f0; }
+
+    .input { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 12px 16px; border-radius: 10px; font-family: inherit; font-size: 14px; width: 100%; box-sizing: border-box; margin-bottom: 14px; }
+    .input:focus { outline: none; border-color: var(--primary); }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .modal-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 440px; max-width: 90%; padding: 32px; }
+  </style>
+</head>
+<body>
+
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div class="brand-icon" style="margin: 0 auto 12px auto;">🌱</div>
+        <h2 style="font-weight: 800;" id="auth-title">Customer Portal Login</h2>
+        <p style="color: var(--text-muted); font-size: 13px;" id="auth-sub">Manage your SATHI Connector licenses & machine activations.</p>
+      </div>
+
+      <div id="form-login">
+        <input type="text" id="log-mobile" class="input" placeholder="Mobile Number">
+        <input type="password" id="log-pass" class="input" placeholder="Password">
+        <button id="btn-login-submit" class="btn" style="width: 100%; height: 46px; margin-bottom: 12px;">Login to Portal</button>
+        <p style="text-align: center; font-size: 13px; color: var(--text-muted);">Don't have an account? <a href="#" onclick="toggleAuth('signup')" style="color: var(--primary);">Sign up</a></p>
+      </div>
+
+      <div id="form-signup" style="display: none;">
+        <input type="text" id="reg-firm" class="input" placeholder="Firm / Company Name">
+        <input type="text" id="reg-owner" class="input" placeholder="Owner Full Name">
+        <input type="text" id="reg-mobile" class="input" placeholder="Mobile Number">
+        <input type="password" id="reg-pass" class="input" placeholder="Create Password">
+        <button id="btn-reg-submit" class="btn" style="width: 100%; height: 46px; margin-bottom: 12px;">Create Account</button>
+        <p style="text-align: center; font-size: 13px; color: var(--text-muted);">Already registered? <a href="#" onclick="toggleAuth('login')" style="color: var(--primary);">Login</a></p>
+      </div>
+
+      <div id="auth-err" style="color: #ef4444; font-size: 13px; text-align: center; margin-top: 12px; font-weight: 600;"></div>
+    </div>
+  </div>
+
+  <header>
+    <a href="index.html" class="brand">
+      <div class="brand-icon">🌱</div>
+      Ruractive Technology Portal
+    </a>
+    <div>
+      <button id="btn-logout" class="btn btn-sec">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">
+        <div>
+          <span id="cust-firm-name">Loading Profile...</span>
+          <div style="font-size: 13px; font-weight: 500; color: var(--text-muted);" id="cust-mobile"></div>
+        </div>
+        <button id="btn-download-app" class="btn">📥 Download Desktop App</button>
+      </div>
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Platform API Key</div>
+          <code id="cust-api-key" style="font-family: monospace; font-size: 14px; color: var(--primary); font-weight: 700;">sk_live_...</code>
+        </div>
+        <button class="btn btn-sec" onclick="navigator.clipboard.writeText(document.getElementById('cust-api-key').textContent); alert('API Key copied!');">📋 Copy API Key</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Active Subscriptions & Machine Activations</span>
+        <a href="index.html#pricing" class="btn">➕ Buy Additional Key</a>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan Type</th>
+              <th>Activation Key</th>
+              <th>Days Remaining</th>
+              <th>Status</th>
+              <th>Expiry Date</th>
+            </tr>
+          </thead>
+          <tbody id="subs-tbody">
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading subscriptions...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('custToken');
+
+    function toggleAuth(mode) {
+      document.getElementById('form-login').style.display = mode === 'login' ? 'block' : 'none';
+      document.getElementById('form-signup').style.display = mode === 'signup' ? 'block' : 'none';
+      document.getElementById('auth-title').textContent = mode === 'login' ? 'Customer Portal Login' : 'Create Customer Account';
+    }
+
+    document.getElementById('btn-login-submit').onclick = async () => {
+      const mob = document.getElementById('log-mobile').value.trim();
+      const pass = document.getElementById('log-pass').value.trim();
+      const err = document.getElementById('auth-err');
+      err.textContent = '';
+
+      try {
+        const res = await fetch('/api/v1/customer/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mobileNo: mob, password: pass })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('custToken', data.token);
+          document.getElementById('auth-overlay').style.display = 'none';
+          loadPortalData();
+        } else {
+          err.textContent = data.error || 'Login failed';
+        }
+      } catch (e) { err.textContent = 'Server error'; }
+    };
+
+    document.getElementById('btn-reg-submit').onclick = async () => {
+      const firm = document.getElementById('reg-firm').value.trim();
+      const owner = document.getElementById('reg-owner').value.trim();
+      const mob = document.getElementById('reg-mobile').value.trim();
+      const pass = document.getElementById('reg-pass').value.trim();
+      const err = document.getElementById('auth-err');
+      err.textContent = '';
+
+      try {
+        const res = await fetch('/api/v1/customer/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firmName: firm, ownerName: owner, mobileNo: mob, password: pass })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('custToken', data.token);
+          document.getElementById('auth-overlay').style.display = 'none';
+          loadPortalData();
+        } else {
+          err.textContent = data.error || 'Registration failed';
+        }
+      } catch (e) { err.textContent = 'Server error'; }
+    };
+
+    document.getElementById('btn-logout').onclick = () => {
+      localStorage.removeItem('custToken');
+      location.reload();
+    };
+
+    if (token) {
+      document.getElementById('auth-overlay').style.display = 'none';
+      loadPortalData();
+    }
+
+    async function loadPortalData() {
+      try {
+        const res = await fetch('/api/v1/customer/me', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('custToken') }
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('cust-firm-name').textContent = data.customer.firmName;
+          document.getElementById('cust-mobile').textContent = '📱 ' + data.customer.mobileNo + (data.customer.ownerName ? ' (' + data.customer.ownerName + ')' : '');
+          document.getElementById('cust-api-key').textContent = data.customer.apiKey;
+
+          const tbody = document.getElementById('subs-tbody');
+          if (data.subscriptions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No subscriptions active yet. Click "Buy Additional Key" above.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.subscriptions.map(s => `
+            <tr>
+              <td><strong style="color: #fff;">${s.planType}</strong></td>
+              <td><code style="font-family: monospace; font-weight: 700; color: var(--primary); font-size: 15px;">${s.activationKey}</code></td>
+              <td><strong>${s.daysRemaining} Days</strong></td>
+              <td><span style="color: ${s.status === 'ACTIVE' ? '#10b981' : '#3b82f6'}; font-weight: 700;">${s.status}</span></td>
+              <td style="font-size: 12px; color: var(--text-muted);">${s.expiresAt ? s.expiresAt.substring(0, 10) : '-'}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>

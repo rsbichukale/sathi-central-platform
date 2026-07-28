@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ruractive Technology — SATHI Connector for Tally</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: #111726;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #3b82f6;
+      --font: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; }
+
+    header {
+      background: rgba(17, 23, 38, 0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 18px 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: #fff; text-decoration: none; }
+    .brand-icon { width: 42px; height: 42px; background: linear-gradient(135deg, #10b981, #3b82f6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+    .nav-link:hover { color: #fff; }
+
+    .btn { background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4); }
+    .btn-sec { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); }
+    .btn-sec:hover { background: rgba(255,255,255,0.15); box-shadow: none; }
+
+    .hero { text-align: center; padding: 100px 24px 80px 24px; max-width: 1000px; margin: 0 auto; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--primary); padding: 6px 16px; border-radius: 30px; font-size: 13px; font-weight: 700; margin-bottom: 24px; }
+    .hero-title { font-size: 54px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.15; margin-bottom: 20px; background: linear-gradient(180deg, #ffffff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-subtitle { font-size: 18px; color: var(--text-muted); margin-bottom: 36px; max-width: 780px; margin-left: auto; margin-right: auto; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto 100px auto; padding: 0 24px; }
+    .feature-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 32px; transition: all 0.3s; }
+    .feature-card:hover { transform: translateY(-4px); border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+    .feature-icon { width: 50px; height: 50px; border-radius: 14px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; color: var(--accent); }
+    .feature-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 14px; color: var(--text-muted); }
+
+    .pricing-section { max-width: 1200px; margin: 0 auto 100px auto; padding: 0 24px; text-align: center; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; margin-top: 48px; }
+    .price-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 40px 32px; text-align: left; position: relative; transition: all 0.3s; }
+    .price-card.featured { border-color: var(--primary); box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); }
+    .price-badge { position: absolute; top: -14px; right: 28px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+    .price-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .price-val { font-size: 42px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .price-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+    .price-features { list-style: none; margin-bottom: 32px; }
+    .price-features li { font-size: 14px; color: #cbd5e1; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 480px; max-width: 90%; padding: 32px; }
+    .input { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 12px 16px; border-radius: 10px; font-family: inherit; font-size: 15px; width: 100%; box-sizing: border-box; margin-bottom: 16px; }
+    .input:focus { outline: none; border-color: var(--primary); }
+
+    footer { background: var(--card-bg); border-top: 1px solid var(--border); padding: 40px 48px; text-align: center; font-size: 14px; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">🌱</div>
+      Ruractive Technology
+    </a>
+    <div class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="portal.html" class="nav-link">Customer Portal</a>
+      <a href="admin.html" class="nav-link">Admin Portal</a>
+    </div>
+    <div>
+      <button id="btn-header-checkout" class="btn">⚡ Activate License</button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">🚀 Ruractive Technology — SATHI Connector for Tally</div>
+    <h1 class="hero-title">Automate Tally Sales & SATHI Portal Compliance</h1>
+    <p class="hero-subtitle">
+      Direct bi-directional sync with Tally ERP 9 & Tally Prime. Automatically extract seed sales vouchers, filter non-seed inventory, and sync Farmer & Dealer Registries across all your branches.
+    </p>
+    <div style="display: flex; gap: 16px; justify-content: center;">
+      <button id="btn-hero-trial" class="btn" style="padding: 14px 32px; font-size: 16px;">⚡ Start 3-Day Free Trial</button>
+      <a href="#pricing" class="btn btn-sec" style="padding: 14px 32px; font-size: 16px;">View Pricing Plans</a>
+    </div>
+  </section>
+
+  <!-- Feature Grid -->
+  <section id="features" class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Real-Time Tally Sync</div>
+      <div class="feature-desc">Connects seamlessly to your local Tally ERP 9 or Tally Prime to pull sales vouchers, party details, and stock items in real-time.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">👨‍🌾</div>
+      <div class="feature-title">Shared Farmer Registry Hub</div>
+      <div class="feature-desc">Centralized farmer directory. Automatically uploads new local farmers and downloads shared updates across all your network branches.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏪</div>
+      <div class="feature-title">Shared Dealer Registry Hub</div>
+      <div class="feature-desc">Centralized dealer master directory. Maintains unified firm details, GSTINs, and contact records across all computers.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">Automated Seed Item Filtering</div>
+      <div class="feature-desc">Smart database filter automatically isolates seed stock items and removes pesticides, fertilizers, and unrelated items.</div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section id="pricing" class="pricing-section">
+    <h2 style="font-size: 36px; font-weight: 800; margin-bottom: 12px;">Simple, Transparent Subscription Pricing</h2>
+    <p style="color: var(--text-muted); font-size: 16px;">Choose the plan that fits your business needs. Purchase online and get instant PC activation.</p>
+
+    <div class="pricing-grid">
+      <!-- 3-Day Trial Card -->
+      <div class="price-card">
+        <div class="price-title">3-Day Free Trial</div>
+        <div class="price-val">₹0</div>
+        <div class="price-sub">No credit card required</div>
+        <ul class="price-features">
+          <li>✅ Full Tally Data Extraction</li>
+          <li>✅ 1 PC Activation</li>
+          <li>✅ Complete Sales Wizards Access</li>
+          <li>✅ 72 Hours Full Feature Access</li>
+        </ul>
+        <button id="btn-buy-trial" class="btn btn-sec" style="width: 100%; height: 48px;">Start Free Trial Instant</button>
+      </div>
+
+      <!-- Annual Pro Card -->
+      <div class="price-card featured">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-title">1-Year Annual Pro</div>
+        <div class="price-val">₹4,999</div>
+        <div class="price-sub">Per year / 1 PC Activation</div>
+        <ul class="price-features">
+          <li>✅ Unlimited Tally Sales Extraction</li>
+          <li>✅ 1 PC Machine Binding</li>
+          <li>✅ Central Shared Farmer & Dealer Registry Sync</li>
+          <li>✅ 1 Year Software Updates & Support</li>
+          <li>✅ Cryptographic 7-Day Offline Access</li>
+        </ul>
+        <button id="btn-buy-pro" class="btn" style="width: 100%; height: 48px;">Purchase Annual Pro Key</button>
+      </div>
+
+      <!-- Enterprise Card -->
+      <div class="price-card">
+        <div class="price-title">Enterprise Multi-PC</div>
+        <div class="price-val">₹12,999</div>
+        <div class="price-sub">Per year / Up to 3 PC Activations</div>
+        <ul class="price-features">
+          <li>✅ Up to 3 PC Machine Activations</li>
+          <li>✅ Multi-Branch Central Registry Sync</li>
+          <li>✅ Priority WhatsApp & Call Support</li>
+          <li>✅ Custom Tally Voucher Type Mapping</li>
+        </ul>
+        <button id="btn-buy-enterprise" class="btn btn-sec" style="width: 100%; height: 48px;">Purchase Enterprise Plan</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Checkout & Activation Modal -->
+  <div id="checkout-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="modal-plan-name">Purchase Annual Pro License</span>
+        <span id="btn-close-modal" style="cursor: pointer;">&times;</span>
+      </h3>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Enter your firm details and Machine Request Code to generate your key.</p>
+
+      <input type="text" id="chk-firm" class="input" placeholder="Firm / Company Name (e.g. SIDDHANATH KRUSHI KENDRA)">
+      <input type="text" id="chk-mobile" class="input" placeholder="10-Digit Mobile Number">
+      <input type="text" id="chk-reqcode" class="input" placeholder="Machine Request Code (e.g. REQ-ED9B-E0E3-5882)" style="font-family: monospace; font-weight: 700; text-transform: uppercase;">
+
+      <div id="chk-result" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--primary); border-radius: 12px; padding: 16px; margin-bottom: 18px; text-align: center;">
+        <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--primary); margin-bottom: 4px;">Your Software Activation Key</div>
+        <div id="key-output" style="font-family: monospace; font-size: 20px; font-weight: 800; color: #fff;"></div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Copy and paste this key into your Desktop App!</p>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button id="btn-cancel-modal" class="btn btn-sec" style="height: 44px;">Cancel</button>
+        <button id="btn-submit-purchase" class="btn" style="height: 44px;">Get Activation Key 🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Ruractive Technology. All Rights Reserved. Powered by SATHI Central Validation Engine.</p>
+  </footer>
+
+  <script>
+    let selectedPlan = 'ANNUAL_PRO';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('checkout-modal');
+      const closeModal = () => modal.style.display = 'none';
+
+      document.getElementById('btn-close-modal').onclick = closeModal;
+      document.getElementById('btn-cancel-modal').onclick = closeModal;
+
+      const openCheckout = (plan, name) => {
+        selectedPlan = plan;
+        document.getElementById('modal-plan-name').textContent = name;
+        document.getElementById('chk-result').style.display = 'none';
+        modal.style.display = 'flex';
+      };
+
+      document.getElementById('btn-header-checkout').onclick = () => openCheckout('ANNUAL_PRO', 'Purchase Annual Pro License');
+      document.getElementById('btn-hero-trial').onclick = () => openCheckout('TRIAL', 'Start 3-Day Free Trial');
+      document.getElementById('btn-buy-trial').onclick = () => openCheckout('TRIAL', 'Start 3-Day Free Trial');
+      document.getElementById('btn-buy-pro').onclick = () => openCheckout('ANNUAL_PRO', 'Purchase Annual Pro License');
+      document.getElementById('btn-buy-enterprise').onclick = () => openCheckout('ENTERPRISE', 'Purchase Enterprise Multi-PC License');
+
+      document.getElementById('btn-submit-purchase').onclick = async () => {
+        const firm = document.getElementById('chk-firm').value.trim();
+        const mobile = document.getElementById('chk-mobile').value.trim();
+        const reqCode = document.getElementById('chk-reqcode').value.trim();
+
+        if (!mobile || !reqCode) {
+          alert('Please enter your Mobile Number and Machine Request Code.');
+          return;
+        }
+
+        const submitBtn = document.getElementById('btn-submit-purchase');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Generating Key...';
+
+        try {
+          const res = await fetch('/api/v1/customer/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firmName: firm, mobileNo: mobile, requestCode: reqCode, planType: selectedPlan })
+          });
+          const data = await res.json();
+          if (data.success) {
+            document.getElementById('chk-result').style.display = 'block';
+            document.getElementById('key-output').textContent = data.activationKey;
+          } else {
+            alert(data.error || 'Failed to generate key.');
+          }
+        } catch (e) {
+          alert('Server connection error.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Get Activation Key 🎉';
+        }
+      };
+    });
+  </script>
+</body>
+</html>

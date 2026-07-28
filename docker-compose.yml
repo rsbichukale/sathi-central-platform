@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  sathi-central:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sathi_central_app
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=9090
+      # Add overrides for JWT, SMTP etc below if needed
+      # - JWT_SECRET=my_custom_secret
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

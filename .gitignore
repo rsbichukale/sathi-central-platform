@@ -1,0 +1,10 @@
+node_modules/
+.env
+data/
+*.sqlite
+*.db
+.DS_Store
+
+# Frontend
+web-ui/node_modules/
+web-ui/dist/
