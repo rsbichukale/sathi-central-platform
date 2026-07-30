@@ -223,86 +223,51 @@ router.post('/email/test', async (req, res) => {
  */
 router.post('/generate-key', async (req, res) => {
   try {
-    let { requestCode, validDays = 365, planType = 'ANNUAL_PRO', firmName, ownerName, mobileNo } = req.body;
+    let { validDays = 365, planType = 'ANNUAL_PRO', firmName, ownerName, mobileNo } = req.body;
     
-    // If requestCode is provided, we bind to that client
-    if (requestCode) {
-      requestCode = requestCode.trim();
-      const { findOrCreateClient, bindMachine, createSubscription } = require('../../services/registrationService');
-      
-      const { prisma } = require('../../db/database');
-      const binding = await prisma.machineBinding.findUnique({
-        where: { request_code: requestCode }
-      });
-      
-      let clientId;
-      let sathiApiKey = '';
-      if (!binding) {
-        // Use provided details or fallback to defaults if not provided
-        const finalMobile = mobileNo || '9999999999';
-        const finalFirm = firmName || ('Client ' + requestCode);
-        
-        const client = await findOrCreateClient({ mobileNo: finalMobile, firmName: finalFirm, ownerName });
-        await bindMachine(client.id, requestCode);
-        clientId = client.id;
-        sathiApiKey = client.sathi_api_key;
-      } else {
-        clientId = binding.client_id;
-        const client = await prisma.client.findUnique({ where: { id: clientId } });
-        sathiApiKey = client ? client.sathi_api_key : '';
-      }
-
-      const result = await createSubscription(clientId, requestCode, planType, { forceNew: true, validDays });
-
-      logger.audit('ADMIN', 'KEY_GENERATED_BOUND', {
-        clientId,
-        requestCode,
-        ipAddress: req.socket.remoteAddress,
-        details: { activationKey: result.activationKey, validDays, planType }
-      });
-
-      return res.json({
-        success: true,
-        requestCode,
-        activationKey: result.activationKey,
-        sathiApiKey,
-        validDays: result.validDays,
-        expiresAt: result.expiresAt,
-        message: `Generated key: ${result.activationKey}`
-      });
-    } else {
-      // Generate an UNUSED universal key
-      const { generateActivationKey } = require('../../utils/keyGenerator');
-      const { prisma } = require('../../db/database');
-      
-      const newKey = generateActivationKey();
-      const now = new Date();
-      const expires = new Date(now.getTime() + validDays * 24 * 60 * 60 * 1000);
-      
-      await prisma.subscription.create({
-        data: {
-          activation_key: newKey,
-          plan_type: planType,
-          status: 'UNUSED',
-          starts_at: now,
-          expires_at: expires
-        }
-      });
-
-      logger.audit('ADMIN', 'KEY_GENERATED_UNIVERSAL', {
-        ipAddress: req.socket.remoteAddress,
-        details: { activationKey: newKey, validDays, planType }
-      });
-
-      return res.json({
-        success: true,
-        requestCode: 'UNIVERSAL',
-        activationKey: newKey,
-        validDays: validDays,
-        expiresAt: expires,
-        message: `Generated Universal Key: ${newKey}`
-      });
+    // Validate required customer fields
+    if (!firmName || !mobileNo) {
+      return res.status(400).json({ success: false, error: 'Firm Name and Mobile No are required to onboard a customer.' });
     }
+
+    const { findOrCreateClient } = require('../../services/registrationService');
+    const { generateActivationKey } = require('../../utils/keyGenerator');
+    const { prisma } = require('../../db/database');
+    
+    // 1. Create or Find the Client
+    const client = await findOrCreateClient({ mobileNo: mobileNo.trim(), firmName: firmName.trim(), ownerName });
+    
+    // 2. Generate a new Activation Key
+    const newKey = generateActivationKey();
+    const now = new Date();
+    const expires = new Date(now.getTime() + validDays * 24 * 60 * 60 * 1000);
+    
+    // 3. Create an UNUSED subscription linked to this Client
+    await prisma.subscription.create({
+      data: {
+        activation_key: newKey,
+        client_id: client.id,
+        plan_type: planType,
+        status: 'UNUSED',
+        starts_at: now,
+        expires_at: expires
+      }
+    });
+
+    logger.audit('ADMIN', 'CUSTOMER_ONBOARDED_KEY_ISSUED', {
+      clientId: client.id,
+      ipAddress: req.socket.remoteAddress,
+      details: { activationKey: newKey, validDays, planType }
+    });
+
+    return res.json({
+      success: true,
+      activationKey: newKey,
+      sathiApiKey: client.sathi_api_key,
+      validDays,
+      expiresAt: expires,
+      message: `Successfully onboarded customer and issued key: ${newKey}`
+    });
   } catch (err) {
     logger.error('Admin', 'Key generation error', { error: err.message });
     return res.status(500).json({ success: false, error: err.message });

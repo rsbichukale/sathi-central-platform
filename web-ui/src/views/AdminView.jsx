@@ -39,7 +39,6 @@ export default function AdminView({ showToast }) {
 
   // Modals & Keys
   const [showKeyModal, setShowKeyModal] = useState(false);
-  const [reqCodeInput, setReqCodeInput] = useState('');
   const [firmNameInput, setFirmNameInput] = useState('');
   const [ownerNameInput, setOwnerNameInput] = useState('');
   const [mobileNoInput, setMobileNoInput] = useState('');
@@ -222,26 +221,18 @@ export default function AdminView({ showToast }) {
   };
 
   const handleGenerateKey = async () => {
-    // requestCode is optional now
-
-
     try {
       const payload = { 
-        requestCode: reqCodeInput.trim(), 
         validDays: parseInt(validDaysInput),
-        planType: planTypeInput
+        planType: planTypeInput,
+        firmName: firmNameInput.trim(),
+        ownerName: ownerNameInput.trim(),
+        mobileNo: mobileNoInput.trim()
       };
       
-      // If we are creating a specific client, include their details
-      if (reqCodeInput.trim()) {
-        payload.firmName = firmNameInput.trim();
-        payload.ownerName = ownerNameInput.trim();
-        payload.mobileNo = mobileNoInput.trim();
-        
-        if (!payload.firmName || !payload.mobileNo) {
-          showToast('Firm Name and Mobile No are required to onboard a customer.', 'error');
-          return;
-        }
+      if (!payload.firmName || !payload.mobileNo) {
+        showToast('Firm Name and Mobile No are required to onboard a customer.', 'error');
+        return;
       }
 
       const res = await fetch('/api/v1/admin/generate-key', {
@@ -377,13 +368,6 @@ export default function AdminView({ showToast }) {
                   value={mobileNoInput} onChange={e => setMobileNoInput(e.target.value)} />
               </div>
             </div>
-            
-            <p className="modal-description">Machine Request Code (Leave blank for Universal Key)</p>
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="REQ-XXXXX-XXXX (Optional)" 
-              value={reqCodeInput} onChange={e => setReqCodeInput(e.target.value)} style={{ marginBottom: '16px', fontFamily: 'monospace', fontWeight: 700, textTransform: 'uppercase' }} />
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
               <div>
