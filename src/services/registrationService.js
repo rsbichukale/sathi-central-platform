@@ -126,7 +126,7 @@ async function createSubscription(clientId, requestCode, planType, { forceNew = 
     }
   }
 
-  const validDays = getValidityDays(planType);
+  const validDays = await getValidityDays(planType);
   const now = new Date();
   const expires = new Date(now.getTime() + validDays * 24 * 60 * 60 * 1000);
   const activationKey = generateActivationKey(expires);

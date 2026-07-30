@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Client {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  client_id             String    @unique @db.VarChar(50)
+  client_secret_hash    String    @db.VarChar(255)
+  api_key               String    @unique @db.VarChar(100)
+  api_key_status        String    @default("ACTIVE") @db.VarChar(20)
+  firm_name             String    @db.VarChar(255)
+  owner_name            String?   @db.VarChar(100)
+  mobile_no             String    @unique @db.VarChar(15)
+  email                 String?   @db.VarChar(100)
+  gstin                 String?   @db.VarChar(20)
+  address               String?
+  city                  String?   @db.VarChar(100)
+  state                 String?   @db.VarChar(100)
+  pincode               String?   @db.VarChar(10)
+  auto_sync_farmers     Int       @default(1)
+  auto_sync_dealers     Int       @default(1)
+  sync_interval_mins    Int       @default(15)
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @default(now()) @updatedAt
+
+  machine_bindings       MachineBinding[]
+  subscriptions          Subscription[]
+  payment_history        PaymentHistory[]
+  shared_farmer_registry SharedFarmerRegistry[]
+  shared_dealer_registry SharedDealerRegistry[]
+
+  @@map("clients")
+}
+
+model MachineBinding {
+  id                   String    @id @default(uuid()) @db.VarChar(36)
+  client_id            String?   @db.VarChar(36)
+  request_code         String    @unique @db.VarChar(50)
+  hardware_mac_address String?   @db.VarChar(100)
+  tally_serial_number  String?   @db.VarChar(50)
+  tally_company_guid   String?   @db.VarChar(100)
+  last_seen_ip         String?   @db.VarChar(50)
+  last_heartbeat_at    DateTime? @default(now())
+
+  client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("machine_bindings")
+}
+
+model Subscription {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  client_id      String?  @db.VarChar(36)
+  activation_key String   @unique @db.VarChar(50)
+  plan_type      String   @default("ANNUAL_PRO") @db.VarChar(50)
+  status         String   @default("ACTIVE") @db.VarChar(20)
+  starts_at      DateTime
+  expires_at     DateTime
+  max_machines   Int      @default(1)
+  created_at     DateTime @default(now())
+
+  client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model SharedFarmerRegistry {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  global_farmer_id      String?   @unique @db.VarChar(50)
+  farmer_name           String    @db.VarChar(150)
+  mobile_no             String    @db.VarChar(15)
+  village_name          String?   @db.VarChar(100)
+  block_name            String?   @db.VarChar(100)
+  district_name         String?   @db.VarChar(100)
+  state_name            String?   @db.VarChar(100)
+  pincode               String?   @db.VarChar(10)
+  contributed_by_client String?   @db.VarChar(36)
+  updated_at            DateTime? @default(now()) @updatedAt
+
+  client Client? @relation(fields: [contributed_by_client], references: [id], onDelete: SetNull)
+
+  @@map("shared_farmer_registry")
+}
+
+model SharedDealerRegistry {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  buyer_code            String?   @unique @db.VarChar(50)
+  gstin                 String?   @db.VarChar(20)
+  dealer_name           String    @db.VarChar(150)
+  firm_name             String?   @db.VarChar(200)
+  mobile_no             String?   @db.VarChar(15)
+  city_village          String?   @db.VarChar(100)
+  district_name         String?   @db.VarChar(100)
+  state_name            String?   @db.VarChar(100)
+  contributed_by_client String?   @db.VarChar(36)
+  updated_at            DateTime? @default(now()) @updatedAt
+
+  client Client? @relation(fields: [contributed_by_client], references: [id], onDelete: SetNull)
+
+  @@map("shared_dealer_registry")
+}
+
+model PaymentHistory {
+  id                   String   @id @default(uuid()) @db.VarChar(36)
+  client_id            String?  @db.VarChar(36)
+  razorpay_order_id    String?  @db.VarChar(100)
+  razorpay_payment_id  String?  @unique @db.VarChar(100)
+  razorpay_signature   String?  @db.VarChar(255)
+  amount               Int
+  currency             String   @default("INR") @db.VarChar(10)
+  status               String   @default("CAPTURED") @db.VarChar(30)
+  payment_method       String?  @db.VarChar(50)
+  created_at           DateTime @default(now())
+
+  client Client? @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("payment_history")
+}
+
+model Inquiry {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  name       String   @db.VarChar(150)
+  mobile     String   @db.VarChar(15)
+  email      String?  @db.VarChar(100)
+  service    String   @default("General Inquiry") @db.VarChar(200)
+  message    String?
+  status     String   @default("NEW") @db.VarChar(20)
+  created_at DateTime @default(now())
+
+  @@map("inquiries")
+}
+
+model SystemLog {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  level        String   @default("INFO") @db.VarChar(10)
+  category     String   @db.VarChar(50)
+  event_action String   @db.VarChar(100)
+  client_id    String?  @db.VarChar(36)
+  request_code String?  @db.VarChar(50)
+  ip_address   String?  @db.VarChar(50)
+  details      String?
+  created_at   DateTime @default(now())
+
+  @@map("system_logs")
+}
+
+model EmailLog {
+  id              String   @id @default(uuid()) @db.VarChar(36)
+  recipient_email String   @db.VarChar(150)
+  subject         String   @db.VarChar(255)
+  template_type   String   @db.VarChar(50)
+  status          String   @default("SENT") @db.VarChar(20)
+  message_id      String?  @db.VarChar(150)
+  error_message   String?
+  created_at      DateTime @default(now())
+
+  @@map("email_logs")
+}
+
+model AdminUser {
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  username      String    @unique @db.VarChar(50)
+  password_hash String    @db.VarChar(255)
+  role          String    @default("ADMIN") @db.VarChar(20)
+  last_login_at DateTime?
+  created_at    DateTime  @default(now())
+
+  @@map("admin_users")
+}
+
+model SystemSetting {
+  setting_key   String   @id @db.VarChar(100)
+  setting_value String?
+  updated_at    DateTime @default(now()) @updatedAt
+
+  @@map("system_settings")
+}

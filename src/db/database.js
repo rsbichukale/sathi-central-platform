@@ -1,7 +1,10 @@
+const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
+let prisma = null;
 let pool = null;
 
 async function getDatabase() {
@@ -19,10 +22,13 @@ async function getDatabase() {
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
 
+  const adapter = new PrismaPg(pool);
+  prisma = new PrismaClient({ adapter });
+
   try {
     const client = await pool.connect();
     
-    // Initialize schema
+    // Initialize schema (Legacy method - eventually we will use Prisma Migrate)
     const schemaSql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
     await client.query(schemaSql);
     
@@ -50,7 +56,10 @@ async function getDatabase() {
       }
     }
     client.release();
-    console.log('[CentralDB] ✅ Connected to PostgreSQL database');
+    
+    // Test Prisma Connection
+    await prisma.$connect();
+    console.log('[CentralDB] ✅ Connected to PostgreSQL database (Prisma + pg)');
   } catch (err) {
     console.error('[CentralDB] ❌ Database connection error:', err);
     process.exit(1);
@@ -60,9 +69,7 @@ async function getDatabase() {
 }
 
 /**
- * Execute a query and return rows.
- * @param {string} sql 
- * @param {Array} params 
+ * Execute a query and return rows (Legacy support).
  */
 async function query(sql, params = []) {
   if (!pool) throw new Error('Database not initialized');
@@ -71,21 +78,18 @@ async function query(sql, params = []) {
 }
 
 /**
- * Execute a query and return the result object (used for INSERT/UPDATE/DELETE).
- * @param {string} sql 
- * @param {Array} params 
+ * Execute a query and return the result object (Legacy support).
  */
 async function run(sql, params = []) {
   if (!pool) throw new Error('Database not initialized');
   const result = await pool.query(sql, params);
-  return result; // return full result which contains rowCount
+  return result; 
 }
 
 function getDbFileSize() {
   return 0; // Not applicable for PostgreSQL
 }
 
-// Dummy export/import since pg dumps require pg_dump
 function exportDatabase() {
   throw new Error("Export is not supported in Postgres mode via this API.");
 }
@@ -100,5 +104,6 @@ module.exports = {
   run,
   exportDatabase,
   importDatabase,
-  getDbFileSize
+  getDbFileSize,
+  prisma
 };

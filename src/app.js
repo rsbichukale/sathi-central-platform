@@ -123,14 +123,14 @@ app.get('/health', async (req, res) => {
 });
 
 // API Routes
-app.use('/api/v1/admin/settings', require('./routes/settings.routes'));
-app.use('/api/v1/admin', require('./routes/admin.routes'));
-app.use('/api/v1/customer', require('./routes/customer.routes'));
-app.use('/api/v1/payment', require('./routes/payment.routes'));
-app.use('/api/v1/inquiry', require('./routes/inquiry.routes'));
-app.use('/api/v1/license', require('./routes/license.routes'));
-app.use('/api/v1/client', require('./routes/client.routes'));
-app.use('/api/v1/registry', require('./routes/registry.routes'));
+app.use('/api/v1/admin/settings', require('./modules/admin/settings.routes'));
+app.use('/api/v1/admin', require('./modules/admin/admin.routes'));
+app.use('/api/v1/customer', require('./modules/customer/customer.routes'));
+app.use('/api/v1/payment', require('./modules/payment/payment.routes'));
+app.use('/api/v1/inquiry', require('./routes/inquiry.routes')); // Still in routes
+app.use('/api/v1/license', require('./modules/license/license.routes'));
+app.use('/api/v1/client', require('./modules/client/client.routes'));
+app.use('/api/v1/registry', require('./routes/registry.routes')); // Still in routes
 
 // Wild-card SPA Fallback Route for HTML5 History API routing
 app.get('*', (req, res) => {
@@ -140,6 +140,9 @@ app.get('*', (req, res) => {
     res.status(200).send('Ruractive Technology API Server');
   }
 });
+
+const globalErrorHandler = require('./middleware/errorHandler');
+app.use(globalErrorHandler);
 
 app.listen(config.PORT, () => {
   console.log(`=======================================================`);

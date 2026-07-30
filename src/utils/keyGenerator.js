@@ -25,10 +25,11 @@ const SettingsService = require('../services/settingsService');
  * @param {string} planType
  * @returns {number}
  */
-function getValidityDays(planType) {
-  const settings = SettingsService.getAllSettings();
+async function getValidityDays(planType) {
+  const settings = await SettingsService.getAllSettings();
   switch (planType) {
     case 'TRIAL': return parseInt(settings.plan_trial_days, 10) || 3;
+    case 'LIFETIME': return parseInt(settings.plan_lifetime_days, 10) || 36500; // 100 years
     case 'ENTERPRISE': return parseInt(settings.plan_enterprise_days, 10) || 730;
     case 'ANNUAL_PRO':
     default: return parseInt(settings.plan_annual_days, 10) || 365;
@@ -40,10 +41,11 @@ function getValidityDays(planType) {
  * @param {string} planType
  * @returns {number}
  */
-function getAmountPaise(planType) {
-  const settings = SettingsService.getAllSettings();
+async function getAmountPaise(planType) {
+  const settings = await SettingsService.getAllSettings();
   switch (planType) {
     case 'TRIAL': return 0;
+    case 'LIFETIME': return parseInt(settings.plan_lifetime_price, 10) || 2999900; // ₹29,999
     case 'ENTERPRISE': return parseInt(settings.plan_enterprise_price, 10) || 1299900;
     case 'ANNUAL_PRO':
     default: return parseInt(settings.plan_annual_price, 10) || 499900;

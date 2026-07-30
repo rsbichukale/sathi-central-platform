@@ -26,24 +26,23 @@ router.post('/farmers/sync', requireApiKey, async (req, res) => {
 
       if (!name || !mobile) continue;
 
-      const globalId = crypto.createHash('md5').update(`${name.toLowerCase()}_${mobile}_${village.toLowerCase()}`).digest('hex');
-      const rows = await query('SELECT * FROM shared_farmer_registry WHERE global_farmer_id = $1', [globalId]);
+      const rows = await query('SELECT * FROM shared_farmer_registry WHERE mobile_no = $1', [mobile]);
       const existing = rows[0];
 
       if (existing) {
         await run(
           `UPDATE shared_farmer_registry
            SET block_name = $1, district_name = $2, state_name = $3, pincode = $4, updated_at = CURRENT_TIMESTAMP
-           WHERE global_farmer_id = $5`,
-          [f.block_name || existing.block_name, f.district_name || existing.district_name, f.state_name || existing.state_name, f.pincode || existing.pincode, globalId]
+           WHERE id = $5`,
+          [f.block_name || existing.block_name, f.district_name || existing.district_name, f.state_name || existing.state_name, f.pincode || existing.pincode, existing.id]
         );
       } else {
         const id = 'fmr_' + crypto.randomBytes(8).toString('hex');
         await run(
           `INSERT INTO shared_farmer_registry
-           (id, global_farmer_id, farmer_name, mobile_no, village_name, block_name, district_name, state_name, pincode, contributed_by_client)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-          [id, globalId, name, mobile, village, f.block_name || '', f.district_name || '', f.state_name || '', f.pincode || '', clientId]
+           (id, farmer_name, mobile_no, village_name, block_name, district_name, state_name, pincode, contributed_by_client)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [id, name, mobile, village, f.block_name || '', f.district_name || '', f.state_name || '', f.pincode || '', clientId]
         );
       }
       mergedCount++;
@@ -61,7 +60,7 @@ router.post('/farmers/sync', requireApiKey, async (req, res) => {
  * GET /api/v1/registry/farmers/updates
  * Download incremental shared farmer records modified after since timestamp
  */
-router.get('/farmers/updates', async (req, res) => {
+router.get('/farmers/updates', requireApiKey, async (req, res) => {
   try {
     const { since, limit = '1000' } = req.query;
     let sql = 'SELECT * FROM shared_farmer_registry WHERE 1=1';
@@ -101,19 +100,13 @@ router.post('/dealers/sync', requireApiKey, async (req, res) => {
     for (const d of dealers) {
       const name = String(d.dealer_name || d.firm_name || '').trim();
       const mobile = String(d.mobile_no || '').trim();
+      const buyerCode = String(d.buyer_code || '').trim();
       const gstin = String(d.gstin || '').trim().toUpperCase();
 
-      if (!name) continue;
+      if (!name || !buyerCode) continue;
 
-      let existing = null;
-      if (gstin) {
-        const rows = await query('SELECT * FROM shared_dealer_registry WHERE gstin = $1', [gstin]);
-        existing = rows[0];
-      }
-      if (!existing && mobile) {
-        const rows = await query('SELECT * FROM shared_dealer_registry WHERE mobile_no = $1 AND dealer_name = $2', [mobile, name]);
-        existing = rows[0];
-      }
+      const rows = await query('SELECT * FROM shared_dealer_registry WHERE buyer_code = $1', [buyerCode]);
+      const existing = rows[0];
 
       if (existing) {
         await run(
@@ -126,9 +119,9 @@ router.post('/dealers/sync', requireApiKey, async (req, res) => {
         const id = 'dlr_' + crypto.randomBytes(8).toString('hex');
         await run(
           `INSERT INTO shared_dealer_registry
-           (id, gstin, dealer_name, firm_name, mobile_no, city_village, district_name, state_name, contributed_by_client)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-          [id, gstin || null, name, d.firm_name || name, mobile, d.city_village || '', d.district_name || '', d.state_name || '', clientId]
+           (id, buyer_code, gstin, dealer_name, firm_name, mobile_no, city_village, district_name, state_name, contributed_by_client)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [id, buyerCode, gstin || null, name, d.firm_name || name, mobile, d.city_village || '', d.district_name || '', d.state_name || '', clientId]
         );
       }
       mergedCount++;
@@ -146,7 +139,7 @@ router.post('/dealers/sync', requireApiKey, async (req, res) => {
  * GET /api/v1/registry/dealers/updates
  * Download incremental shared dealer records modified after since timestamp
  */
-router.get('/dealers/updates', async (req, res) => {
+router.get('/dealers/updates', requireApiKey, async (req, res) => {
   try {
     const { since, limit = '1000' } = req.query;
     let sql = 'SELECT * FROM shared_dealer_registry WHERE 1=1';

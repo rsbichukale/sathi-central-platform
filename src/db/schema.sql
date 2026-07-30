@@ -67,7 +67,8 @@ CREATE TABLE IF NOT EXISTS shared_farmer_registry (
 -- 5. Central Shared Dealer Registry
 CREATE TABLE IF NOT EXISTS shared_dealer_registry (
     id VARCHAR(36) PRIMARY KEY,
-    gstin VARCHAR(20) UNIQUE,
+    buyer_code VARCHAR(50) UNIQUE,
+    gstin VARCHAR(20),
     dealer_name VARCHAR(150) NOT NULL,
     firm_name VARCHAR(200),
     mobile_no VARCHAR(15),

@@ -1,8 +1,8 @@
 const crypto = require('crypto');
+const config = require('../config');
 
 // Custom Base32 Alphabet (Excludes 0, 1, O, I for readability)
 const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-const SECRET_KEY = 'SATHI_LICENSE_SECRET_KEY_2026'; // Symmetric key for checksums
 const EPOCH_START = new Date('2024-01-01T00:00:00Z').getTime();
 
 class LicenseKeyManager {
@@ -83,7 +83,7 @@ class LicenseKeyManager {
     const expiryDays = this._dateToEpochDays(expiryDate);
     payload.writeUInt16BE(Math.max(0, expiryDays), 4);
 
-    const hmac = crypto.createHmac('sha256', SECRET_KEY);
+    const hmac = crypto.createHmac('sha256', config.LICENSE_SECRET_KEY);
     hmac.update(payload);
     const checksum = hmac.digest().slice(0, 9); // Take first 9 bytes
 
@@ -104,7 +104,7 @@ class LicenseKeyManager {
       const payload = buffer.slice(0, 6);
       const providedChecksum = buffer.slice(6, 15);
 
-      const hmac = crypto.createHmac('sha256', SECRET_KEY);
+      const hmac = crypto.createHmac('sha256', config.LICENSE_SECRET_KEY);
       hmac.update(payload);
       const expectedChecksum = hmac.digest().slice(0, 9);
 

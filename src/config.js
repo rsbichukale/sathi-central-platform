@@ -20,6 +20,9 @@ const config = {
   JWT_SECRET: process.env.JWT_SECRET || 'ruractive_unified_jwt_secret_2026',
   JWT_CUSTOMER_EXPIRY: process.env.JWT_CUSTOMER_EXPIRY || '30d',
   JWT_LICENSE_EXPIRY: process.env.JWT_LICENSE_EXPIRY || '7d',
+  
+  // License Checksum Secret
+  LICENSE_SECRET_KEY: process.env.LICENSE_SECRET_KEY || 'SATHI_LICENSE_SECRET_KEY_2026',
 
   // Razorpay Payment Gateway
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || 'rzp_test_ruractive2026',

@@ -8,3 +8,5 @@ data/
 # Frontend
 web-ui/node_modules/
 web-ui/dist/
+
+/src/generated/prisma
