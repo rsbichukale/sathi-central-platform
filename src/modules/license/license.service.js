@@ -131,6 +131,10 @@ class LicenseService {
       return { success: false, valid: false, status: 'UNREGISTERED', message: 'PC not registered or invalid Activation Key.' };
     }
 
+    if (sub && sub.status === 'UNUSED') {
+      return { success: false, valid: false, status: 'UNUSED', message: 'This key has not been activated yet. Please click Activate Software.' };
+    }
+
     if (binding) {
       await prisma.machineBinding.update({
         where: { id: binding.id },
@@ -167,23 +171,43 @@ class LicenseService {
   }
 
   async activate({ requestCode, activationKey }) {
+    if (!activationKey || !requestCode) {
+      throw new AppError('Machine Request Code and Activation Key are required.', 400);
+    }
+
+    const keyClean = activationKey.trim().toUpperCase();
+
+    // Check if the key exists and is valid
+    const existingSub = await prisma.subscription.findUnique({
+      where: { activation_key: keyClean }
+    });
+
+    if (!existingSub) {
+      throw new AppError('Invalid Activation Key. Please purchase a valid key.', 404);
+    }
+
+    if (existingSub.status !== 'UNUSED') {
+      throw new AppError('This Activation Key has already been used.', 400);
+    }
+
     const binding = await prisma.machineBinding.findUnique({
       where: { request_code: requestCode }
     });
 
     if (!binding) {
-      throw new AppError('Machine Request Code not found.', 404);
+      throw new AppError('Machine Request Code not found. Please register PC first.', 404);
     }
 
-    const keyClean = activationKey.trim().toUpperCase();
     const now = new Date();
-    const expires = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+    // Assuming 365 days valid duration for simplicity, or we can use existing expires_at - starts_at duration
+    const validMs = existingSub.expires_at.getTime() - existingSub.starts_at.getTime();
+    const expires = new Date(now.getTime() + validMs);
 
-    const newSub = await prisma.subscription.create({
+    // Bind the subscription
+    await prisma.subscription.update({
+      where: { id: existingSub.id },
       data: {
         client_id: binding.client_id,
-        activation_key: keyClean,
-        plan_type: 'ANNUAL_PRO',
         status: 'ACTIVE',
         starts_at: now,
         expires_at: expires
@@ -191,7 +215,7 @@ class LicenseService {
     });
 
     const token = jwt.sign(
-      { clientId: binding.client_id, requestCode, plan: 'ANNUAL_PRO', expiresAt: expires.toISOString() },
+      { clientId: binding.client_id, requestCode, plan: existingSub.plan_type, expiresAt: expires.toISOString() },
       config.JWT_SECRET,
       { expiresIn: config.JWT_LICENSE_EXPIRY }
     );

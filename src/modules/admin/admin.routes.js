@@ -223,41 +223,77 @@ router.post('/email/test', async (req, res) => {
  */
 router.post('/generate-key', async (req, res) => {
   try {
-    const { requestCode, validDays = 365, planType = 'ANNUAL_PRO' } = req.body;
-    if (!requestCode) {
-      return res.status(400).json({ success: false, error: 'Request Code is required.' });
-    }
+    let { requestCode, validDays = 365, planType = 'ANNUAL_PRO' } = req.body;
+    
+    // If requestCode is provided, we bind to that client
+    if (requestCode) {
+      requestCode = requestCode.trim();
+      const { findOrCreateClient, bindMachine, createSubscription } = require('../../services/registrationService');
+      
+      const { prisma } = require('../../db/database');
+      const binding = await prisma.machineBinding.findUnique({
+        where: { request_code: requestCode }
+      });
+      
+      let clientId;
+      if (!binding) {
+        const client = await findOrCreateClient({ mobileNo: '9999999999', firmName: 'Client ' + requestCode });
+        await bindMachine(client.id, requestCode);
+        clientId = client.id;
+      } else {
+        clientId = binding.client_id;
+      }
 
-    const { findOrCreateClient, bindMachine, createSubscription } = require('../../services/registrationService');
+      const result = await createSubscription(clientId, requestCode, planType, { forceNew: true, validDays });
 
-    const bindRows = await query('SELECT * FROM machine_bindings WHERE request_code = $1', [requestCode]);
-    let binding = bindRows[0];
-    let clientId;
+      logger.audit('ADMIN', 'KEY_GENERATED_BOUND', {
+        clientId,
+        requestCode,
+        ipAddress: req.socket.remoteAddress,
+        details: { activationKey: result.activationKey, validDays, planType }
+      });
 
-    if (!binding) {
-      const client = await findOrCreateClient({ mobileNo: '9999999999', firmName: 'Client ' + requestCode });
-      await bindMachine(client.id, requestCode);
-      clientId = client.id;
+      return res.json({
+        success: true,
+        requestCode,
+        activationKey: result.activationKey,
+        validDays: result.validDays,
+        expiresAt: result.expiresAt,
+        message: `Generated key: ${result.activationKey}`
+      });
     } else {
-      clientId = binding.client_id;
+      // Generate an UNUSED universal key
+      const { generateActivationKey } = require('../../utils/keyGenerator');
+      const { prisma } = require('../../db/database');
+      
+      const newKey = generateActivationKey();
+      const now = new Date();
+      const expires = new Date(now.getTime() + validDays * 24 * 60 * 60 * 1000);
+      
+      await prisma.subscription.create({
+        data: {
+          activation_key: newKey,
+          plan_type: planType,
+          status: 'UNUSED',
+          starts_at: now,
+          expires_at: expires
+        }
+      });
+
+      logger.audit('ADMIN', 'KEY_GENERATED_UNIVERSAL', {
+        ipAddress: req.socket.remoteAddress,
+        details: { activationKey: newKey, validDays, planType }
+      });
+
+      return res.json({
+        success: true,
+        requestCode: 'UNIVERSAL',
+        activationKey: newKey,
+        validDays: validDays,
+        expiresAt: expires,
+        message: `Generated Universal Key: ${newKey}`
+      });
     }
-
-    const result = await createSubscription(clientId, requestCode, planType, { forceNew: true });
-
-    logger.audit('ADMIN', 'KEY_GENERATED', {
-      clientId,
-      requestCode,
-      ipAddress: req.socket.remoteAddress,
-      details: { activationKey: result.activationKey, validDays, planType }
-    });
-
-    return res.json({
-      success: true,
-      requestCode,
-      activationKey: result.activationKey,
-      validDays: result.validDays,
-      expiresAt: result.expiresAt,
-      message: `Generated key: ${result.activationKey}`
     });
   } catch (err) {
     logger.error('Admin', 'Key generation error', { error: err.message });

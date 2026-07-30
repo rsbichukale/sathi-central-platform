@@ -217,10 +217,8 @@ export default function AdminView({ showToast }) {
   };
 
   const handleGenerateKey = async () => {
-    if (!reqCodeInput.trim()) {
-      showToast('Please enter a Request Code', 'error');
-      return;
-    }
+    // requestCode is optional now
+
 
     try {
       const res = await fetch('/api/v1/admin/generate-key', {
@@ -330,8 +328,12 @@ export default function AdminView({ showToast }) {
               <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }} onClick={() => setShowKeyModal(false)}>&times;</button>
             </div>
             
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Machine Request Code (Optional, bypasses machine lock if empty)</label>
-            <input type="text" className="modern-input" placeholder="REQ-XXXXX-XXXX" value={reqCodeInput} onChange={e => setReqCodeInput(e.target.value)} style={{ marginBottom: '20px', fontFamily: 'monospace', fontWeight: 700, textTransform: 'uppercase' }} />
+            <p className="modal-description">Machine Request Code (Leave blank for Universal Key)</p>
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="REQ-XXXXX-XXXX (Optional)" 
+              value={reqCodeInput} onChange={e => setReqCodeInput(e.target.value)} style={{ marginBottom: '20px', fontFamily: 'monospace', fontWeight: 700, textTransform: 'uppercase' }} />
             
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Validity Duration (Days)</label>
             <select className="modern-input" value={validDaysInput} onChange={e => setValidDaysInput(e.target.value)} style={{ marginBottom: '24px' }}>
