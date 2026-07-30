@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
-    "build": "cd web-ui && npm install && npm run build"
+    "build": "npx prisma generate && cd web-ui && npm install && npm run build"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
