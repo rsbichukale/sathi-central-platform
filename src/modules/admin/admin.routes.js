@@ -223,7 +223,7 @@ router.post('/email/test', async (req, res) => {
  */
 router.post('/generate-key', async (req, res) => {
   try {
-    let { requestCode, validDays = 365, planType = 'ANNUAL_PRO' } = req.body;
+    let { requestCode, validDays = 365, planType = 'ANNUAL_PRO', firmName, ownerName, mobileNo } = req.body;
     
     // If requestCode is provided, we bind to that client
     if (requestCode) {
@@ -236,12 +236,20 @@ router.post('/generate-key', async (req, res) => {
       });
       
       let clientId;
+      let sathiApiKey = '';
       if (!binding) {
-        const client = await findOrCreateClient({ mobileNo: '9999999999', firmName: 'Client ' + requestCode });
+        // Use provided details or fallback to defaults if not provided
+        const finalMobile = mobileNo || '9999999999';
+        const finalFirm = firmName || ('Client ' + requestCode);
+        
+        const client = await findOrCreateClient({ mobileNo: finalMobile, firmName: finalFirm, ownerName });
         await bindMachine(client.id, requestCode);
         clientId = client.id;
+        sathiApiKey = client.sathi_api_key;
       } else {
         clientId = binding.client_id;
+        const client = await prisma.client.findUnique({ where: { id: clientId } });
+        sathiApiKey = client ? client.sathi_api_key : '';
       }
 
       const result = await createSubscription(clientId, requestCode, planType, { forceNew: true, validDays });
@@ -257,6 +265,7 @@ router.post('/generate-key', async (req, res) => {
         success: true,
         requestCode,
         activationKey: result.activationKey,
+        sathiApiKey,
         validDays: result.validDays,
         expiresAt: result.expiresAt,
         message: `Generated key: ${result.activationKey}`

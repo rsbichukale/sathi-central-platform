@@ -40,8 +40,13 @@ export default function AdminView({ showToast }) {
   // Modals & Keys
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [reqCodeInput, setReqCodeInput] = useState('');
+  const [firmNameInput, setFirmNameInput] = useState('');
+  const [ownerNameInput, setOwnerNameInput] = useState('');
+  const [mobileNoInput, setMobileNoInput] = useState('');
+  const [planTypeInput, setPlanTypeInput] = useState('ANNUAL_PRO');
   const [validDaysInput, setValidDaysInput] = useState(365);
   const [generatedKey, setGeneratedKey] = useState('');
+  const [generatedApiKey, setGeneratedApiKey] = useState('');
   
   // Admin Users Modal
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -221,15 +226,34 @@ export default function AdminView({ showToast }) {
 
 
     try {
+      const payload = { 
+        requestCode: reqCodeInput.trim(), 
+        validDays: parseInt(validDaysInput),
+        planType: planTypeInput
+      };
+      
+      // If we are creating a specific client, include their details
+      if (reqCodeInput.trim()) {
+        payload.firmName = firmNameInput.trim();
+        payload.ownerName = ownerNameInput.trim();
+        payload.mobileNo = mobileNoInput.trim();
+        
+        if (!payload.firmName || !payload.mobileNo) {
+          showToast('Firm Name and Mobile No are required to onboard a customer.', 'error');
+          return;
+        }
+      }
+
       const res = await fetch('/api/v1/admin/generate-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ requestCode: reqCodeInput.trim(), validDays: parseInt(validDaysInput) })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
         setGeneratedKey(data.activationKey);
-        showToast('Key generated successfully!', 'success');
+        setGeneratedApiKey(data.sathiApiKey || '');
+        showToast('Customer onboarded and keys generated successfully!', 'success');
         loadAdminData();
       } else {
         showToast(data.error || 'Failed to generate key', 'error');
@@ -324,8 +348,34 @@ export default function AdminView({ showToast }) {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ width: '480px', maxWidth: '90%', padding: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Issue Activation Key</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Onboard Customer & Issue Key</h3>
               <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }} onClick={() => setShowKeyModal(false)}>&times;</button>
+            </div>
+            
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Firm / Company Name *</label>
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="e.g. Acme Seeds Pvt Ltd" 
+              value={firmNameInput} onChange={e => setFirmNameInput(e.target.value)} style={{ marginBottom: '16px' }} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Owner Name</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="Owner Name" 
+                  value={ownerNameInput} onChange={e => setOwnerNameInput(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Mobile No *</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="10-digit number" 
+                  value={mobileNoInput} onChange={e => setMobileNoInput(e.target.value)} />
+              </div>
             </div>
             
             <p className="modal-description">Machine Request Code (Leave blank for Universal Key)</p>
@@ -333,20 +383,49 @@ export default function AdminView({ showToast }) {
               type="text" 
               className="form-control" 
               placeholder="REQ-XXXXX-XXXX (Optional)" 
-              value={reqCodeInput} onChange={e => setReqCodeInput(e.target.value)} style={{ marginBottom: '20px', fontFamily: 'monospace', fontWeight: 700, textTransform: 'uppercase' }} />
+              value={reqCodeInput} onChange={e => setReqCodeInput(e.target.value)} style={{ marginBottom: '16px', fontFamily: 'monospace', fontWeight: 700, textTransform: 'uppercase' }} />
             
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Validity Duration (Days)</label>
-            <select className="modern-input" value={validDaysInput} onChange={e => setValidDaysInput(e.target.value)} style={{ marginBottom: '24px' }}>
-              <option value="3">3 Days (Trial)</option>
-              <option value="365">365 Days (1 Year)</option>
-              <option value="730">730 Days (2 Years)</option>
-              <option value="9999">Unlimited (Lifetime)</option>
-            </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Plan Type</label>
+                <select className="modern-input" value={planTypeInput} onChange={e => setPlanTypeInput(e.target.value)}>
+                  <option value="ANNUAL_PRO">Annual Pro</option>
+                  <option value="ENTERPRISE">Enterprise</option>
+                  <option value="TRIAL">Trial</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Validity (Days)</label>
+                <select className="modern-input" value={validDaysInput} onChange={e => setValidDaysInput(e.target.value)}>
+                  <option value="3">3 Days (Trial)</option>
+                  <option value="365">365 Days (1 Year)</option>
+                  <option value="730">730 Days (2 Years)</option>
+                  <option value="9999">Unlimited (Lifetime)</option>
+                </select>
+              </div>
+            </div>
             
             {generatedKey ? (
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '20px', textAlign: 'center', marginBottom: '24px' }}>
-                <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 800, color: '#166534', marginBottom: '8px' }}>Successfully Issued Key</div>
-                <div style={{ fontFamily: 'monospace', fontSize: '24px', fontWeight: 900, color: '#0f172a', letterSpacing: '1px' }}>{generatedKey}</div>
+              <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>🔑 Credentials Handoff</div>
+                
+                {generatedApiKey && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>SATHI API Key</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <code style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0', padding: '8px', borderRadius: '6px', fontSize: '12px', color: '#0f172a' }}>{generatedApiKey}</code>
+                      <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => { navigator.clipboard.writeText(generatedApiKey); showToast('API Key copied!', 'success'); }}>Copy</button>
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>Activation License Key</div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <code style={{ flex: 1, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '8px', borderRadius: '6px', fontSize: '14px', fontWeight: 800, color: '#166534' }}>{generatedKey}</code>
+                    <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => { navigator.clipboard.writeText(generatedKey); showToast('License Key copied!', 'success'); }}>Copy</button>
+                  </div>
+                </div>
               </div>
             ) : null}
 
