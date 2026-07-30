@@ -19,6 +19,10 @@ RUN mkdir -p /app/data && \
 COPY package*.json ./
 RUN npm install --production
 
+# Copy prisma schema and generate client
+COPY prisma/ ./prisma/
+RUN npx prisma generate
+
 # Copy backend source code
 COPY src/ ./src/
 
