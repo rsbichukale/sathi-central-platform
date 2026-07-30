@@ -294,7 +294,6 @@ router.post('/generate-key', async (req, res) => {
         message: `Generated Universal Key: ${newKey}`
       });
     }
-    });
   } catch (err) {
     logger.error('Admin', 'Key generation error', { error: err.message });
     return res.status(500).json({ success: false, error: err.message });
