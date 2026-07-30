@@ -9,5 +9,6 @@ router.post('/register-trial', validate(schema.registerTrialSchema), licenseCont
 router.post('/heartbeat', validate(schema.heartbeatSchema), licenseController.heartbeat);
 router.post('/validate', validate(schema.validateSchema), licenseController.validate);
 router.post('/activate', validate(schema.activateSchema), licenseController.activate);
+router.post('/bind-and-activate', validate(schema.bindAndActivateSchema), licenseController.bindAndActivate);
 
 module.exports = router;

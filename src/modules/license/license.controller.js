@@ -40,3 +40,13 @@ exports.activate = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.bindAndActivate = async (req, res, next) => {
+  try {
+    const result = await licenseService.bindAndActivate(req.body);
+    logger.info('License', `Key bind and activate: ${req.body.requestCode} → ${req.body.activationKey}`);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};

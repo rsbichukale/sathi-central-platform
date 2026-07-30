@@ -229,6 +229,83 @@ class LicenseService {
       token
     };
   }
+
+  async bindAndActivate({ apiKey, activationKey, requestCode, tallySerial, macAddress }) {
+    if (!apiKey || !activationKey || !requestCode) {
+      throw new AppError('API Key, Activation Key, and Request Code are required.', 400);
+    }
+
+    const keyClean = activationKey.trim().toUpperCase();
+
+    // 1. Verify Client via API Key
+    const client = await prisma.client.findFirst({
+      where: { api_key: apiKey }
+    });
+
+    if (!client) {
+      throw new AppError('Invalid SATHI API Key. Client not found.', 404);
+    }
+
+    // 2. Verify Activation Key
+    const existingSub = await prisma.subscription.findUnique({
+      where: { activation_key: keyClean }
+    });
+
+    if (!existingSub) {
+      throw new AppError('Invalid Activation Key. Please contact support.', 404);
+    }
+
+    if (existingSub.status !== 'UNUSED') {
+      throw new AppError('This Activation Key has already been used.', 400);
+    }
+    
+    // If the key has a client_id and it doesn't match the API Key's client, throw error.
+    if (existingSub.client_id && existingSub.client_id !== client.id) {
+        throw new AppError('This Activation Key belongs to another customer.', 403);
+    }
+
+    // 3. Bind Machine (create MachineBinding for this requestCode and Client)
+    const { bindMachine } = require('../../services/registrationService');
+    await bindMachine(client.id, requestCode, { tallySerial, macAddress });
+
+    // 4. Update Subscription
+    const now = new Date();
+    await prisma.subscription.update({
+      where: { id: existingSub.id },
+      data: {
+        status: 'ACTIVE',
+        client_id: client.id,
+        starts_at: existingSub.starts_at || now,
+      }
+    });
+
+    const expiresAt = new Date(existingSub.expires_at);
+    const daysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+    const token = jwt.sign(
+      { clientId: client.id, requestCode, plan: existingSub.plan_type, expiresAt },
+      config.JWT_SECRET,
+      { expiresIn: config.JWT_LICENSE_EXPIRY }
+    );
+
+    // 5. Return Client Info and Activation Success
+    return {
+      success: true,
+      valid: true,
+      status: 'ACTIVE',
+      planType: existingSub.plan_type,
+      daysRemaining,
+      expiresAt: existingSub.expires_at,
+      token,
+      message: 'Machine linked and software activated successfully.',
+      clientDetails: {
+        firmName: client.firm_name,
+        ownerName: client.owner_name,
+        mobileNo: client.mobile_no,
+        email: client.email
+      }
+    };
+  }
 }
 
 module.exports = new LicenseService();
