@@ -12,10 +12,7 @@ import TermsView from './views/TermsView';
 import PrivacyView from './views/PrivacyView';
 import AboutView from './views/AboutView';
 import LandingView from './views/LandingView'; // SATHI Product Page
-import CustomerView from './views/CustomerView';
 import AdminView from './views/AdminView';
-import RegisterView from './views/RegisterView';
-import LoginView from './views/LoginView';
 import ApiDocsView from './views/ApiDocsView';
 
 const pathToViewMap = {
@@ -27,10 +24,8 @@ const pathToViewMap = {
   '/terms': 'terms',
   '/privacy': 'privacy',
   '/about': 'about',
-  '/customer': 'customer',
+  '/about': 'about',
   '/admin': 'admin',
-  '/register': 'register',
-  '/login': 'login',
   '/developers': 'developers'
 };
 
@@ -43,22 +38,18 @@ const viewToPathMap = {
   'terms': '/terms',
   'privacy': '/privacy',
   'about': '/about',
-  'customer': '/customer',
+  'about': '/about',
   'admin': '/admin',
-  'register': '/register',
-  'login': '/login',
   'developers': '/developers'
 };
 
 export default function App() {
   const hostname = window.location.hostname.toLowerCase();
   const isAdminSubdomain = hostname.startsWith('admin.');
-  const isCustomerSubdomain = hostname.startsWith('sathi.');
-  const isSubdomain = isAdminSubdomain || isCustomerSubdomain;
+  const isSubdomain = isAdminSubdomain;
 
   const getViewFromLocation = () => {
     if (isAdminSubdomain) return 'admin';
-    if (isCustomerSubdomain) return 'customer';
 
     const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
     return pathToViewMap[pathname] || 'home';
@@ -68,7 +59,6 @@ export default function App() {
 
   const setCurrentView = (view) => {
     if (isAdminSubdomain) { setCurrentViewState('admin'); return; }
-    if (isCustomerSubdomain) { setCurrentViewState('customer'); return; }
 
     setCurrentViewState(view);
     const targetPath = viewToPathMap[view] || '/';
@@ -247,7 +237,7 @@ export default function App() {
 
       {/* Header Navigation - Hidden on dedicated subdomains */}
       {!isSubdomain && (
-        <Header currentView={currentView} setCurrentView={setCurrentView} openInquiry={openInquiry} openCompanyRegistration={() => setCompanyModal(true)} />
+        <Header currentView={currentView} setCurrentView={setCurrentView} openInquiry={openInquiry} />
       )}
 
       {/* Multi-Page View Router */}
@@ -260,17 +250,10 @@ export default function App() {
         {currentView === 'terms' && <TermsView />}
         {currentView === 'privacy' && <PrivacyView />}
         {currentView === 'about' && <AboutView openInquiry={openInquiry} />}
-        {currentView === 'customer' && <CustomerView showToast={showToast} />}
         {currentView === 'admin' && <AdminView showToast={showToast} />}
-        {currentView === 'register' && <RegisterView setCurrentView={setCurrentView} showToast={showToast} />}
-        {currentView === 'login' && <LoginView setCurrentView={setCurrentView} showToast={showToast} />}
         {currentView === 'developers' && <ApiDocsView />}
       </main>
 
-      {/* Company Registration Modal */}
-      {companyModal && (
-        <CompanyRegistrationModal onClose={() => setCompanyModal(false)} showToast={showToast} />
-      )}
 
       {/* Inquiry Modal */}
       {inquiryModal && (
