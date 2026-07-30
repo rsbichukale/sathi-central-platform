@@ -168,47 +168,7 @@ export default function Header({ currentView, setCurrentView, openInquiry }) {
       {/* Action Options */}
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
         <button 
-          onClick={() => setCurrentView('login')} 
-          style={{
-            background: currentView === 'login' || currentView === 'customer' || currentView === 'admin' ? 'rgba(5, 150, 105, 0.1)' : 'transparent',
-            border: 'none',
-            color: currentView === 'login' || currentView === 'customer' || currentView === 'admin' ? '#059669' : '#0f172a',
-            padding: '8px 14px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: '10px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          🔐 Login
-        </button>
-        <button 
-          onClick={() => setCurrentView('register')} 
-          style={{
-            background: currentView === 'register' ? '#059669' : '#ffffff',
-            border: '1px solid #cbd5e1',
-            color: currentView === 'register' ? '#ffffff' : '#0f172a',
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: '10px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            whiteSpace: 'nowrap',
-            boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          🏢 Register Company
-        </button>
-        <button 
+
           onClick={() => openInquiry('Custom IT Project / Inquiry')} 
           style={{
             background: 'linear-gradient(135deg, #059669, #047857)',

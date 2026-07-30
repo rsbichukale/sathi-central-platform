@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import TallySimulator from '../components/TallySimulator';
 import FaqSection from '../components/FaqSection';
 
-export default function LandingView({ openCheckout }) {
+export default function LandingView({ openInquiry }) {
   const [billingCycle, setBillingCycle] = useState('annual');
 
   return (
@@ -29,8 +29,8 @@ export default function LandingView({ openCheckout }) {
         </p>
 
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button onClick={() => openCheckout('TRIAL', 'Start 3-Day Free Trial')} className="btn-primary" style={{ padding: '14px 32px', fontSize: '16px' }}>
-            ⚡ Start 3-Day Free Trial
+          <button onClick={() => openInquiry('SATHI Connector - 3-Day Free Trial')} className="btn-primary" style={{ padding: '14px 32px', fontSize: '16px' }}>
+            ⚡ Request 3-Day Free Trial
           </button>
           <a href="#pricing" className="btn-secondary" style={{ padding: '14px 32px', fontSize: '16px', textDecoration: 'none' }}>
             View Pricing Plans
@@ -71,7 +71,7 @@ export default function LandingView({ openCheckout }) {
       {/* Pricing Section */}
       <section id="pricing" style={{ maxWidth: '1200px', margin: '0 auto 100px auto', padding: '0 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: '36px', fontWeight: 800, marginBottom: '12px', color: '#0f172a' }}>Simple, Transparent Subscription Pricing</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '16px', marginBottom: '32px' }}>Purchase online and receive instant PC machine activation.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '16px', marginBottom: '32px' }}>Contact our team to get your PC machine activated instantly.</p>
 
         {/* Toggle */}
         <div style={{ display: 'inline-flex', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '30px', marginBottom: '48px' }}>
@@ -103,8 +103,8 @@ export default function LandingView({ openCheckout }) {
                 <li style={{ fontSize: '14px', marginBottom: '12px', display: 'flex', gap: '10px', color: '#334155' }}>✅ 72 Hours Unlimited Access</li>
               </ul>
             </div>
-            <button onClick={() => openCheckout('TRIAL', 'Start 3-Day Free Trial')} className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
-              Start Free Trial Instant
+            <button onClick={() => openInquiry('SATHI Connector - Free Trial Request')} className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+              Request Free Trial
             </button>
           </div>
 
@@ -123,8 +123,8 @@ export default function LandingView({ openCheckout }) {
                 <li style={{ fontSize: '14px', marginBottom: '12px', display: 'flex', gap: '10px', color: '#334155' }}>✅ Cryptographic 7-Day Offline Access</li>
               </ul>
             </div>
-            <button onClick={() => openCheckout('ANNUAL_PRO', 'Purchase Annual Pro Key')} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              Purchase Annual Pro Key
+            <button onClick={() => openInquiry('SATHI Connector - Annual Pro Request')} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              Contact Sales for Pro Key
             </button>
           </div>
 
@@ -141,8 +141,8 @@ export default function LandingView({ openCheckout }) {
                 <li style={{ fontSize: '14px', marginBottom: '12px', display: 'flex', gap: '10px', color: '#334155' }}>✅ Custom Tally Voucher Mapping</li>
               </ul>
             </div>
-            <button onClick={() => openCheckout('ENTERPRISE', 'Purchase Enterprise Plan')} className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
-              Purchase Enterprise Plan
+            <button onClick={() => openInquiry('SATHI Connector - Enterprise Plan')} className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+              Get Enterprise Quote
             </button>
           </div>
         </div>

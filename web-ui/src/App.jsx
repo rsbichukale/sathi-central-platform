@@ -254,7 +254,7 @@ export default function App() {
       <main style={{ flex: 1 }}>
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} openInquiry={openInquiry} />}
         {currentView === 'products' && <ProductsView setCurrentView={setCurrentView} openInquiry={openInquiry} />}
-        {currentView === 'sathi' && <LandingView openCheckout={openCheckout} />}
+        {currentView === 'sathi' && <LandingView openInquiry={openInquiry} />}
         {currentView === 'services' && <ServicesView openInquiry={openInquiry} />}
         {currentView === 'downloads' && <DownloadsView showToast={showToast} />}
         {currentView === 'terms' && <TermsView />}
