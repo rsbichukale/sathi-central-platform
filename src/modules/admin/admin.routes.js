@@ -5,14 +5,58 @@ const jwt = require('jsonwebtoken');
 const config = require('../../config');
 const { query, run } = require('../../db/database');
 const { requireAdminAuth } = require('../../middleware/auth');
-const { isSmtpConfigured, sendTestEmail, sendLicenseStatusEmail } = require('../../utils/emailService');
 const logger = require('../../utils/logger');
 
 /**
  * POST /api/v1/admin/login
  */
-router.post('/login', (req, res) => {
-  const { password } = req.body;
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (username) {
+    try {
+      const userRows = await query('SELECT * FROM admin_users WHERE username = $1', [username.toLowerCase()]);
+      const user = userRows[0];
+      
+      if (!user) {
+        logger.security('ADMIN', 'ADMIN_LOGIN_FAILED', {
+          ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+          details: { reason: 'User not found', username }
+        });
+        return res.status(401).json({ success: false, error: 'Invalid username or password.' });
+      }
+
+      const bcrypt = require('bcryptjs');
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      
+      if (!isMatch) {
+        logger.security('ADMIN', 'ADMIN_LOGIN_FAILED', {
+          ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+          details: { reason: 'Invalid password', username }
+        });
+        return res.status(401).json({ success: false, error: 'Invalid username or password.' });
+      }
+
+      await run('UPDATE admin_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+
+      const adminToken = jwt.sign(
+        { role: user.role, username: user.username, issuedAt: Date.now() },
+        config.JWT_SECRET,
+        { expiresIn: `${config.ADMIN_TOKEN_EXPIRY_HOURS}h` }
+      );
+
+      logger.audit('ADMIN', 'ADMIN_LOGIN_SUCCESS', {
+        ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        details: { role: user.role, username: user.username }
+      });
+
+      return res.json({ success: true, token: adminToken, message: 'Admin login successful.' });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: 'Internal server error during login.' });
+    }
+  }
+
+  // Fallback to global admin password if no username is provided
   const adminPass = config.ADMIN_PASSWORD || (config.NODE_ENV !== 'production' ? 'admin123' : null);
 
   if (!adminPass) {
@@ -232,7 +276,7 @@ router.post('/generate-key', async (req, res) => {
 
     const { findOrCreateClient } = require('../../services/registrationService');
     const { generateActivationKey } = require('../../utils/keyGenerator');
-    const { prisma } = require('../../db/database');
+    const db = require('../../db/database');
     
     // 1. Create or Find the Client
     const client = await findOrCreateClient({ mobileNo: mobileNo.trim(), firmName: firmName.trim(), ownerName });
@@ -243,7 +287,7 @@ router.post('/generate-key', async (req, res) => {
     const expires = new Date(now.getTime() + validDays * 24 * 60 * 60 * 1000);
     
     // 3. Create an UNUSED subscription linked to this Client
-    await prisma.subscription.create({
+    await db.prisma.subscription.create({
       data: {
         activation_key: newKey,
         client_id: client.id,
@@ -348,10 +392,7 @@ router.post('/clients/revoke', async (req, res) => {
         ipAddress: req.socket.remoteAddress
       });
 
-      if (client && client.email) {
-        sendLicenseStatusEmail({ toEmail: client.email, firmName: client.firm_name, status: 'EXPIRED', requestCode })
-          .catch(err => logger.error('Email', 'Revoke notification email failed', { error: err.message }));
-      }
+
     }
     return res.json({ success: true, message: `License for ${requestCode} revoked.` });
   } catch (err) {
@@ -381,10 +422,7 @@ router.post('/clients/toggle-suspend', async (req, res) => {
         ipAddress: req.socket.remoteAddress
       });
 
-      if (client && client.email) {
-        sendLicenseStatusEmail({ toEmail: client.email, firmName: client.firm_name, status: newStatus, requestCode })
-          .catch(err => logger.error('Email', 'Status change notification email failed', { error: err.message }));
-      }
+
 
       return res.json({ success: true, newStatus, message: `Subscription for ${requestCode} ${action === 'reactivate' ? 'reactivated' : 'suspended'}.` });
     }

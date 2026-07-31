@@ -4,7 +4,7 @@ import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminStatsOverview from '../components/admin/AdminStatsOverview';
 import ClientManagement from '../components/admin/ClientManagement';
 import LeadInquiries from '../components/admin/LeadInquiries';
-import PaymentReceipts from '../components/admin/PaymentReceipts';
+
 import AuditLogs from '../components/admin/AuditLogs';
 import EmailLogs from '../components/admin/EmailLogs';
 import BackupRestore from '../components/admin/BackupRestore';
@@ -14,6 +14,7 @@ import DealerManagement from '../components/admin/DealerManagement';
 
 export default function AdminView({ showToast }) {
   const [token, setToken] = useState(sessionStorage.getItem('adminToken') || '');
+  const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
   const [authErr, setAuthErr] = useState('');
   const [activeTab, setActiveTab] = useState('analytics');
@@ -63,7 +64,7 @@ export default function AdminView({ showToast }) {
       const res = await fetch('/api/v1/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pass.trim() })
+        body: JSON.stringify({ username: user.trim(), password: pass.trim() })
       });
       const data = await res.json();
       if (data.success) {
@@ -286,6 +287,15 @@ export default function AdminView({ showToast }) {
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '32px' }}>Enter your administrator credentials to securely access the central management platform.</p>
 
           <input 
+            type="text" 
+            className="modern-input" 
+            value={user} 
+            onChange={e => setUser(e.target.value)} 
+            placeholder="Admin Username" 
+            style={{ marginBottom: '16px', textAlign: 'center', fontSize: '16px', padding: '14px' }} 
+          />
+
+          <input 
             type="password" 
             className="modern-input" 
             value={pass} 
@@ -323,7 +333,7 @@ export default function AdminView({ showToast }) {
           {activeTab === 'analytics' && <AdminStatsOverview stats={stats} chartData={chartData} setShowKeyModal={setShowKeyModal} />}
           {activeTab === 'clients' && <ClientManagement clients={clients} search={search} setSearch={setSearch} statusFilter={statusFilter} setStatusFilter={setStatusFilter} handleExportCSV={handleExportCSV} handleRevokeKey={handleRevokeKey} />}
           {activeTab === 'inquiries' && <LeadInquiries inquiries={inquiries} handleExportCSV={handleExportCSV} />}
-          {activeTab === 'payments' && <PaymentReceipts payments={payments} handleExportCSV={handleExportCSV} />}
+          
           {activeTab === 'logs' && <AuditLogs logs={logs} search={search} setSearch={setSearch} logLevelFilter={logLevelFilter} setLogLevelFilter={setLogLevelFilter} logCategoryFilter={logCategoryFilter} setLogCategoryFilter={setLogCategoryFilter} handleExportCSV={handleExportCSV} />}
           {activeTab === 'email_logs' && <EmailLogs emailLogs={emailLogs} />}
           {activeTab === 'backup' && <BackupRestore backupInfo={backupInfo} handleBackupDownload={handleBackupDownload} handleRestoreUpload={handleRestoreUpload} fileInputRef={fileInputRef} />}
@@ -346,7 +356,7 @@ export default function AdminView({ showToast }) {
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Firm / Company Name *</label>
             <input 
               type="text" 
-              className="form-control" 
+              className="modern-input" 
               placeholder="e.g. Acme Seeds Pvt Ltd" 
               value={firmNameInput} onChange={e => setFirmNameInput(e.target.value)} style={{ marginBottom: '16px' }} />
 
@@ -355,7 +365,7 @@ export default function AdminView({ showToast }) {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Owner Name</label>
                 <input 
                   type="text" 
-                  className="form-control" 
+                  className="modern-input" 
                   placeholder="Owner Name" 
                   value={ownerNameInput} onChange={e => setOwnerNameInput(e.target.value)} />
               </div>
@@ -363,7 +373,7 @@ export default function AdminView({ showToast }) {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Mobile No *</label>
                 <input 
                   type="text" 
-                  className="form-control" 
+                  className="modern-input" 
                   placeholder="10-digit number" 
                   value={mobileNoInput} onChange={e => setMobileNoInput(e.target.value)} />
               </div>

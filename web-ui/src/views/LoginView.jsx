@@ -4,6 +4,7 @@ export default function LoginView({ setCurrentView, showToast }) {
   const [loginType, setLoginType] = useState('customer'); // 'customer' or 'admin'
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
+  const [adminUser, setAdminUser] = useState('');
   const [adminPass, setAdminPass] = useState('');
   const [authErr, setAuthErr] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,7 @@ export default function LoginView({ setCurrentView, showToast }) {
       const res = await fetch('/api/v1/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: adminPass.trim() })
+        body: JSON.stringify({ username: adminUser.trim(), password: adminPass.trim() })
       });
       const data = await res.json();
       if (data.success) {
@@ -123,9 +124,14 @@ export default function LoginView({ setCurrentView, showToast }) {
           </form>
         ) : (
           <form onSubmit={handleAdminLogin}>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Admin Username</label>
+              <input type="text" className="modern-input" placeholder="Enter Admin Username" value={adminUser} onChange={e => setAdminUser(e.target.value)} style={{ textAlign: 'center' }} />
+            </div>
+
             <div style={{ marginBottom: '24px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Admin Master Password</label>
-              <input type="password" className="modern-input" placeholder="Enter Admin Master Password" value={adminPass} onChange={e => setAdminPass(e.target.value)} required style={{ textAlign: 'center' }} />
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Admin Password</label>
+              <input type="password" className="modern-input" placeholder="Enter Admin Password" value={adminPass} onChange={e => setAdminPass(e.target.value)} required style={{ textAlign: 'center' }} />
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', justifyContent: 'center', height: '46px', fontSize: '15px', marginBottom: '20px' }}>

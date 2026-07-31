@@ -27,6 +27,7 @@ exports.validate = async (req, res, next) => {
     const result = await licenseService.validate(req.body);
     res.json(result);
   } catch (error) {
+    console.error('[LicenseController] Validation Error:', error);
     next(error);
   }
 };

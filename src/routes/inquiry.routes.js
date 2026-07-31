@@ -3,7 +3,6 @@ const router = express.Router();
 const crypto = require('crypto');
 const { query, run } = require('../db/database');
 const { validateMobile, validateEmail } = require('../middleware/auth');
-const { sendInquiryNotificationEmail } = require('../utils/emailService');
 const logger = require('../utils/logger');
 
 /**

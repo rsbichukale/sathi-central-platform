@@ -1,4 +1,4 @@
-const { prisma } = require('../../db/database');
+const db = require('../../db/database');
 const crypto = require('crypto');
 const config = require('../../config');
 const jwt = require('jsonwebtoken');
@@ -12,7 +12,7 @@ class LicenseService {
     await bindMachine(client.id, requestCode, { tallySerial, macAddress });
 
     // Prisma: Check existing trial
-    let sub = await prisma.subscription.findFirst({
+    let sub = await db.prisma.subscription.findFirst({
       where: {
         client_id: client.id,
         status: 'TRIAL'
@@ -46,7 +46,7 @@ class LicenseService {
   }
 
   async heartbeat({ requestCode }) {
-    const binding = await prisma.machineBinding.findUnique({
+    const binding = await db.prisma.machineBinding.findUnique({
       where: { request_code: requestCode }
     });
 
@@ -55,12 +55,12 @@ class LicenseService {
     }
 
     // Update heartbeat
-    await prisma.machineBinding.update({
+    await db.prisma.machineBinding.update({
       where: { id: binding.id },
       data: { last_heartbeat_at: new Date() }
     });
 
-    const sub = await prisma.subscription.findFirst({
+    const sub = await db.prisma.subscription.findFirst({
       where: { client_id: binding.client_id },
       orderBy: { created_at: 'desc' }
     });
@@ -104,26 +104,44 @@ class LicenseService {
     let binding = null;
     let sub = null;
 
-    if (activationKey) {
-      sub = await prisma.subscription.findFirst({
-        where: { activation_key: activationKey },
-        orderBy: { created_at: 'desc' }
-      });
-      if (sub) {
-        binding = await prisma.machineBinding.findFirst({
-          where: { client_id: sub.client_id },
-          orderBy: { last_heartbeat_at: 'desc' }
-        });
+    if (db.isSqlite) {
+      if (activationKey) {
+        const subRows = await db.query('SELECT * FROM subscriptions WHERE activation_key = $1 ORDER BY created_at DESC', [activationKey]);
+        sub = subRows[0];
+        if (sub) {
+          const bindingRows = await db.query('SELECT * FROM machine_bindings WHERE client_id = $1 ORDER BY last_heartbeat_at DESC', [sub.client_id]);
+          binding = bindingRows[0];
+        }
+      } else if (requestCode) {
+        const bindingRows = await db.query('SELECT * FROM machine_bindings WHERE request_code = $1', [requestCode]);
+        binding = bindingRows[0];
+        if (binding) {
+          const subRows = await db.query('SELECT * FROM subscriptions WHERE client_id = $1 ORDER BY created_at DESC', [binding.client_id]);
+          sub = subRows[0];
+        }
       }
-    } else if (requestCode) {
-      binding = await prisma.machineBinding.findUnique({
-        where: { request_code: requestCode }
-      });
-      if (binding) {
-        sub = await prisma.subscription.findFirst({
-          where: { client_id: binding.client_id },
+    } else {
+      if (activationKey) {
+        sub = await db.prisma.subscription.findFirst({
+          where: { activation_key: activationKey },
           orderBy: { created_at: 'desc' }
         });
+        if (sub) {
+          binding = await db.prisma.machineBinding.findFirst({
+            where: { client_id: sub.client_id },
+            orderBy: { last_heartbeat_at: 'desc' }
+          });
+        }
+      } else if (requestCode) {
+        binding = await db.prisma.machineBinding.findUnique({
+          where: { request_code: requestCode }
+        });
+        if (binding) {
+          sub = await db.prisma.subscription.findFirst({
+            where: { client_id: binding.client_id },
+            orderBy: { created_at: 'desc' }
+          });
+        }
       }
     }
 
@@ -136,10 +154,14 @@ class LicenseService {
     }
 
     if (binding) {
-      await prisma.machineBinding.update({
-        where: { id: binding.id },
-        data: { last_heartbeat_at: new Date() }
-      });
+      if (db.isSqlite) {
+        await db.run('UPDATE machine_bindings SET last_heartbeat_at = CURRENT_TIMESTAMP WHERE id = $1', [binding.id]);
+      } else {
+        await db.prisma.machineBinding.update({
+          where: { id: binding.id },
+          data: { last_heartbeat_at: new Date() }
+        });
+      }
     }
 
     if (!sub) {
@@ -178,7 +200,7 @@ class LicenseService {
     const keyClean = activationKey.trim().toUpperCase();
 
     // Check if the key exists and is valid
-    const existingSub = await prisma.subscription.findUnique({
+    const existingSub = await db.prisma.subscription.findUnique({
       where: { activation_key: keyClean }
     });
 
@@ -190,7 +212,7 @@ class LicenseService {
       throw new AppError('This Activation Key has already been used.', 400);
     }
 
-    const binding = await prisma.machineBinding.findUnique({
+    const binding = await db.prisma.machineBinding.findUnique({
       where: { request_code: requestCode }
     });
 
@@ -204,7 +226,7 @@ class LicenseService {
     const expires = new Date(now.getTime() + validMs);
 
     // Bind the subscription
-    await prisma.subscription.update({
+    await db.prisma.subscription.update({
       where: { id: existingSub.id },
       data: {
         client_id: binding.client_id,
@@ -237,17 +259,8 @@ class LicenseService {
 
     const keyClean = activationKey.trim().toUpperCase();
 
-    // 1. Verify Client via API Key
-    const client = await prisma.client.findFirst({
-      where: { api_key: apiKey }
-    });
-
-    if (!client) {
-      throw new AppError('Invalid SATHI API Key. Client not found.', 404);
-    }
-
-    // 2. Verify Activation Key
-    const existingSub = await prisma.subscription.findUnique({
+    // 1. Verify Activation Key first
+    const existingSub = await db.prisma.subscription.findUnique({
       where: { activation_key: keyClean }
     });
 
@@ -255,13 +268,32 @@ class LicenseService {
       throw new AppError('Invalid Activation Key. Please contact support.', 404);
     }
 
-    if (existingSub.status !== 'UNUSED') {
-      throw new AppError('This Activation Key has already been used.', 400);
+    // 2. Verify Client via API Key, or infer from Subscription
+    let client;
+    if (apiKey && apiKey !== 'NO_API_KEY_YET') {
+      client = await db.prisma.client.findFirst({
+        where: { api_key: apiKey }
+      });
+      if (!client) {
+        throw new AppError('Invalid SATHI API Key. Client not found.', 404);
+      }
+    } else if (existingSub.client_id) {
+      client = await db.prisma.client.findUnique({
+        where: { id: existingSub.client_id }
+      });
+    }
+
+    if (!client) {
+      throw new AppError('Could not determine Client for this license.', 404);
     }
     
-    // If the key has a client_id and it doesn't match the API Key's client, throw error.
+    // If the key has a client_id and it doesn't match, throw error.
     if (existingSub.client_id && existingSub.client_id !== client.id) {
         throw new AppError('This Activation Key belongs to another customer.', 403);
+    }
+
+    if (existingSub.status !== 'UNUSED' && existingSub.client_id !== client.id) {
+      throw new AppError('This Activation Key has already been used by another client.', 400);
     }
 
     // 3. Bind Machine (create MachineBinding for this requestCode and Client)
@@ -270,7 +302,7 @@ class LicenseService {
 
     // 4. Update Subscription
     const now = new Date();
-    await prisma.subscription.update({
+    await db.prisma.subscription.update({
       where: { id: existingSub.id },
       data: {
         status: 'ACTIVE',

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -78,10 +79,6 @@ const adminLimiter = rateLimit({
 });
 
 app.use('/api/v1/admin', adminLimiter);
-app.use('/api/v1/customer/login', authLimiter);
-app.use('/api/v1/customer/register', authLimiter);
-app.use('/api/v1/payment/create-order', paymentLimiter);
-app.use('/api/v1/payment/verify-signature', paymentLimiter);
 
 const { startCronJobs } = require('./utils/cronJobs');
 
@@ -125,8 +122,6 @@ app.get('/health', async (req, res) => {
 // API Routes
 app.use('/api/v1/admin/settings', require('./modules/admin/settings.routes'));
 app.use('/api/v1/admin', require('./modules/admin/admin.routes'));
-app.use('/api/v1/customer', require('./modules/customer/customer.routes'));
-app.use('/api/v1/payment', require('./modules/payment/payment.routes'));
 app.use('/api/v1/inquiry', require('./routes/inquiry.routes')); // Still in routes
 app.use('/api/v1/license', require('./modules/license/license.routes'));
 app.use('/api/v1/client', require('./modules/client/client.routes'));

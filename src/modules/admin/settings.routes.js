@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { requireAdminAuth } = require('../../middleware/auth');
 const SettingsService = require('../../services/settingsService');
-const { sendTestEmail } = require('../../utils/emailService');
 
 // Require Admin Authentication for all settings routes
 router.use(requireAdminAuth);

@@ -6,7 +6,6 @@ const { query, run } = require('../../db/database');
 const { requireCustomerAuth, validateMobile, validateEmail, validateGstin } = require('../../middleware/auth');
 const { generateRequestCode } = require('../../utils/keyGenerator');
 const { findOrCreateClient, bindMachine, createSubscription } = require('../../services/registrationService');
-const { sendActivationKeyEmail } = require('../../utils/emailService');
 const logger = require('../../utils/logger');
 
 /**

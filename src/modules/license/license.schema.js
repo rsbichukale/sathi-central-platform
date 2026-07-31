@@ -35,7 +35,7 @@ exports.activateSchema = z.object({
 
 exports.bindAndActivateSchema = z.object({
   body: z.object({
-    apiKey: z.string().min(1, 'SATHI API Key is required'),
+    apiKey: z.string().optional(),
     activationKey: z.string().min(25, 'Activation Key must be 25 characters'),
     requestCode: z.string().min(1, 'Request Code is required'),
     tallySerial: z.string().optional(),

@@ -53,9 +53,9 @@ module.exports = (err, req, res, next) => {
       error = handlePrismaError(error);
     }
     
-    // Check if error is from Zod validation
-    if (error.name === 'ZodError') {
-      const messages = error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
+    if (error.name === 'ZodError' || (err && err.name === 'ZodError')) {
+      const zodIssues = err.issues || err.errors || [];
+      const messages = zodIssues.map(e => `${e.path.join('.')}: ${e.message}`);
       error = new AppError(`Validation Error: ${messages.join(', ')}`, 400);
     }
 

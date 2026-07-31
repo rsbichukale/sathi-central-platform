@@ -4,7 +4,6 @@
 
 const { query, run } = require('../db/database');
 const logger = require('./logger');
-const { sendExpiryWarningEmail } = require('./emailService');
 
 /**
  * Check for expiring subscriptions and send warning emails.
