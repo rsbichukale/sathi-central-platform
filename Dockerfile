@@ -17,7 +17,9 @@ RUN mkdir -p /app/data && \
 
 # Install backend dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN apk add --no-cache python3 make g++ && \
+    npm install --production && \
+    apk del python3 make g++
 
 # Copy prisma schema and generate client
 COPY prisma/ ./prisma/
