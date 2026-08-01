@@ -36,7 +36,7 @@ exports.activateSchema = z.object({
 exports.bindAndActivateSchema = z.object({
   body: z.object({
     apiKey: z.string().optional(),
-    activationKey: z.string().min(25, 'Activation Key must be 25 characters'),
+    activationKey: z.string().min(1, 'Activation Key is required'),
     requestCode: z.string().min(1, 'Request Code is required'),
     tallySerial: z.string().optional(),
     macAddress: z.string().optional()
