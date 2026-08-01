@@ -253,8 +253,8 @@ class LicenseService {
   }
 
   async bindAndActivate({ apiKey, activationKey, requestCode, tallySerial, macAddress }) {
-    if (!apiKey || !activationKey || !requestCode) {
-      throw new AppError('API Key, Activation Key, and Request Code are required.', 400);
+    if (!activationKey || !requestCode) {
+      throw new AppError('Activation Key and Request Code are required.', 400);
     }
 
     const keyClean = activationKey.trim().toUpperCase();
@@ -323,18 +323,26 @@ class LicenseService {
     // 5. Return Client Info and Activation Success
     return {
       success: true,
-      valid: true,
-      status: 'ACTIVE',
-      planType: existingSub.plan_type,
-      daysRemaining,
-      expiresAt: existingSub.expires_at,
-      token,
       message: 'Machine linked and software activated successfully.',
       clientDetails: {
         firmName: client.firm_name,
         ownerName: client.owner_name,
         mobileNo: client.mobile_no,
-        email: client.email
+        email: client.email,
+        gstin: client.gstin,
+        address: client.address,
+        userApiKey: client.api_key,
+        autoSyncFarmers: client.auto_sync_farmers !== undefined ? client.auto_sync_farmers : 1,
+        autoSyncDealers: client.auto_sync_dealers !== undefined ? client.auto_sync_dealers : 1,
+        syncIntervalMins: client.sync_interval_mins || 15
+      },
+      licenseDetails: {
+        valid: true,
+        status: 'ACTIVE',
+        planType: existingSub.plan_type,
+        daysRemaining,
+        expiresAt: existingSub.expires_at,
+        token
       }
     };
   }
